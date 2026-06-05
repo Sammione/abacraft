@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtual environments
+venv/
+.env/
+.venv/
+ENV/
+
+# Trained model binaries (large files — regenerate with train_models.py)
+models/product_classifier.keras
+models/sentiment_model.pkl
+models/tfidf_vectorizer.pkl
+
+# Raw data
+data/*.csv
+data/*.json
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
