@@ -66,13 +66,13 @@ def preprocess_text(text):
 print("Preprocessing synthetic reviews...")
 df_reviews['cleaned_review'] = df_reviews['review'].apply(preprocess_text)
 
-# 4. CACHE CV MODEL (Pretrained MobileNetV2)
-print("Caching Pretrained MobileNetV2 weights and ImageNet classes...")
-mobile_model = applications.MobileNetV2(weights='imagenet')
+# 4. CACHE CV MODEL (Pretrained EfficientNetB0)
+print("Caching Pretrained EfficientNetB0 weights and ImageNet classes...")
+eff_model = applications.EfficientNetB0(weights='imagenet')
 # Run a dummy prediction to cache the imagenet_class_index.json
 dummy_input = tf.zeros((1, 224, 224, 3))
-preds = mobile_model.predict(dummy_input)
-applications.mobilenet_v2.decode_predictions(preds, top=1)
-print("MobileNetV2 cached successfully.")
+preds = eff_model.predict(dummy_input)
+applications.efficientnet.decode_predictions(preds, top=1)
+print("EfficientNetB0 cached successfully.")
 
 print("Training process and caching completed successfully.")

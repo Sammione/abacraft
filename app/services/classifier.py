@@ -11,39 +11,38 @@ class ProductClassifier:
         self.load_model()
 
     def load_model(self):
-        # Load MobileNetV2 pretrained on ImageNet
-        # This will download the weights the first time if not cached
-        self.model = tf.keras.applications.MobileNetV2(weights="imagenet")
-        print("Pretrained MobileNetV2 model loaded successfully.")
+        # Load EfficientNetB0 pretrained on ImageNet for higher accuracy
+        self.model = tf.keras.applications.EfficientNetB0(weights="imagenet")
+        print("Pretrained EfficientNetB0 model loaded successfully.")
 
     def preprocess_image(self, image_bytes: bytes) -> np.ndarray:
         image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         image = image.resize((224, 224))
         img_array = np.array(image, dtype=np.float32)
-        # MobileNetV2 expects inputs in range [-1, 1]
-        img_array = tf.keras.applications.mobilenet_v2.preprocess_input(img_array)
+        # EfficientNet expects specific preprocessing
+        img_array = tf.keras.applications.efficientnet.preprocess_input(img_array)
         img_array = np.expand_dims(img_array, axis=0)
         return img_array
 
     def map_imagenet_to_category(self, decoded_predictions) -> tuple[str, float]:
-        # decoded_predictions is a list of tuples: (class_id, class_name, prob)
-        # Keywords for our 4 categories
+        # Broadened keywords for better mapping
         category_keywords = {
-            "Bags": ["bag", "purse", "backpack", "satchel", "pouch", "wallet", "packet", "suitcase", "briefcase"],
-            "Shoes": ["shoe", "sandal", "boot", "sneaker", "loafer", "clog", "sock"],
-            "Clothing": ["shirt", "suit", "dress", "skirt", "jacket", "coat", "sweater", "tie", "jersey", "vest", "cardigan", "gown", "cloak", "bikini", "apron", "t-shirt"],
-            "Accessories": ["glasses", "watch", "necklace", "belt", "hat", "cap", "helmet", "umbrella", "sunglasses", "chain", "ring"]
+            "Bags": ["bag", "purse", "backpack", "satchel", "pouch", "wallet", "packet", "suitcase", "briefcase", "basket", "pack", "luggage", "tote"],
+            "Shoes": ["shoe", "sandal", "boot", "sneaker", "loafer", "clog", "sock", "footwear"],
+            "Clothing": ["shirt", "suit", "dress", "skirt", "jacket", "coat", "sweater", "tie", "jersey", "vest", "cardigan", "gown", "cloak", "bikini", "apron", "t-shirt", "jean", "uniform", "kimono", "pajama", "poncho", "sarong", "windbreaker", "wool", "velvet", "fleece", "garment", "apparel"],
+            "Accessories": ["glasses", "watch", "necklace", "belt", "hat", "cap", "helmet", "umbrella", "sunglasses", "chain", "ring", "jewelry", "bracelet", "earring", "glove", "scarf", "sombrero", "bandana", "cravat"]
         }
 
-        # Check top 5 predictions
+        # Check top 10 predictions for a higher chance of finding a match
         for _, class_name, prob in decoded_predictions[0]:
             class_name_lower = class_name.lower().replace("_", " ")
             
             for category, keywords in category_keywords.items():
                 if any(kw in class_name_lower for kw in keywords):
+                    # We return the probability of the ImageNet class we matched against
                     return category, float(prob)
         
-        # If no match found in top 5, default to Accessories with the top probability
+        # If no match found in top 10, default to Accessories with the top probability
         top_prob = float(decoded_predictions[0][0][2])
         return "Accessories", top_prob
 
@@ -54,8 +53,8 @@ class ProductClassifier:
         img_array = self.preprocess_image(image_bytes)
         predictions = self.model.predict(img_array)
         
-        # Decode top 5 ImageNet predictions
-        decoded = tf.keras.applications.mobilenet_v2.decode_predictions(predictions, top=5)
+        # Decode top 10 ImageNet predictions to ensure we catch variations
+        decoded = tf.keras.applications.efficientnet.decode_predictions(predictions, top=10)
         
         # Map to Aba Craft categories
         predicted_class, confidence = self.map_imagenet_to_category(decoded)
