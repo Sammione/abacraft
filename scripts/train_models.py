@@ -18,6 +18,9 @@ nltk.download('wordnet', quiet=True)
 nltk.download('omw-1.4', quiet=True)
 nltk.download('punkt', quiet=True)
 nltk.download('punkt_tab', quiet=True)
+nltk.download('vader_lexicon', quiet=True)
+nltk.download('averaged_perceptron_tagger', quiet=True)
+nltk.download('averaged_perceptron_tagger_eng', quiet=True)
 
 
 # 1. SETUP DIRECTORIES
@@ -72,25 +75,4 @@ preds = mobile_model.predict(dummy_input)
 applications.mobilenet_v2.decode_predictions(preds, top=1)
 print("MobileNetV2 cached successfully.")
 
-# 5. TRAIN NLP MODEL (TF-IDF + Logistic Regression)
-print("Training Sentiment Analyzer...")
-vectorizer = TfidfVectorizer()
-X_tfidf = vectorizer.fit_transform(df_reviews['cleaned_review'])
-y_sentiment = df_reviews['sentiment'].values
-
-sentiment_model = LogisticRegression()
-sentiment_model.fit(X_tfidf, y_sentiment)
-
-# Save Vectorizer and Sentiment Model
-vectorizer_path = "models/tfidf_vectorizer.pkl"
-model_pkl_path = "models/sentiment_model.pkl"
-
-with open(vectorizer_path, 'wb') as f:
-    pickle.dump(vectorizer, f)
-
-with open(model_pkl_path, 'wb') as f:
-    pickle.dump(sentiment_model, f)
-
-print(f"Sentiment model saved to {model_pkl_path}")
-print(f"TF-IDF vectorizer saved to {vectorizer_path}")
-print("Training process completed successfully.")
+print("Training process and caching completed successfully.")
