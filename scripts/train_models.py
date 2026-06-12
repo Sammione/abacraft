@@ -27,38 +27,6 @@ os.makedirs("data", exist_ok=True)
 print("Directories initialized.")
 
 # 2. GENERATE SYNTHETIC DATA
-# Generate 16 dummy images (4 per class: Bags, Shoes, Clothing, Accessories)
-# Image size: 224x224x3 (EfficientNet standard input size)
-CLASSES = ["Bags", "Shoes", "Clothing", "Accessories"]
-NUM_CLASSES = len(CLASSES)
-
-print("Generating synthetic image data...")
-x_train_img = []
-y_train_img = []
-
-for i, cls in enumerate(CLASSES):
-    for _ in range(8):  # 8 images per class
-        # Create a simple synthetic image with a unique color pattern per class to allow learning
-        img = np.zeros((224, 224, 3), dtype=np.float32)
-        # Class-dependent pattern
-        if cls == "Bags":
-            img[50:170, 50:170, 0] = 1.0  # Red square
-        elif cls == "Shoes":
-            img[50:170, 50:170, 1] = 1.0  # Green square
-        elif cls == "Clothing":
-            img[50:170, 50:170, 2] = 1.0  # Blue square
-        elif cls == "Accessories":
-            img[50:170, 50:170, 0:2] = 1.0  # Yellow square
-            
-        # Add random noise
-        img += np.random.normal(0, 0.05, img.shape)
-        img = np.clip(img, 0.0, 1.0)
-        x_train_img.append(img)
-        y_train_img.append(i)
-
-x_train_img = np.array(x_train_img)
-y_train_img = np.array(y_train_img)
-
 # Generate synthetic text data for reviews
 print("Generating synthetic text data...")
 reviews_data = [
@@ -95,41 +63,14 @@ def preprocess_text(text):
 print("Preprocessing synthetic reviews...")
 df_reviews['cleaned_review'] = df_reviews['review'].apply(preprocess_text)
 
-# 4. TRAIN CV MODEL (Transfer Learning with EfficientNetB0)
-print("Building and training Product Classifier (EfficientNetB0)...")
-# Note: we use weights=None to avoid slow external downloads.
-base_model = applications.EfficientNetB0(
-    weights=None, 
-    include_top=False, 
-    input_shape=(224, 224, 3)
-)
-
-model = models.Sequential([
-    base_model,
-    layers.GlobalAveragePooling2D(),
-    layers.Dropout(0.2),
-    layers.Dense(NUM_CLASSES, activation='softmax')
-])
-
-model.compile(
-    optimizer='adam',
-    loss='sparse_categorical_crossentropy',
-    metrics=['accuracy']
-)
-
-# Train for 2 epochs just to initialize weights and check-point
-model.fit(
-    x_train_img, 
-    y_train_img, 
-    epochs=3, 
-    batch_size=8,
-    verbose=1
-)
-
-# Save Keras Model
-model_path = "models/product_classifier.keras"
-model.save(model_path)
-print(f"Product Classifier model saved to {model_path}")
+# 4. CACHE CV MODEL (Pretrained MobileNetV2)
+print("Caching Pretrained MobileNetV2 weights and ImageNet classes...")
+mobile_model = applications.MobileNetV2(weights='imagenet')
+# Run a dummy prediction to cache the imagenet_class_index.json
+dummy_input = tf.zeros((1, 224, 224, 3))
+preds = mobile_model.predict(dummy_input)
+applications.mobilenet_v2.decode_predictions(preds, top=1)
+print("MobileNetV2 cached successfully.")
 
 # 5. TRAIN NLP MODEL (TF-IDF + Logistic Regression)
 print("Training Sentiment Analyzer...")
