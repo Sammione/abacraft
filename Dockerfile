@@ -24,6 +24,9 @@ RUN python -c "import nltk; nltk.download('stopwords'); nltk.download('wordnet')
 # Copy the rest of the application code
 COPY . /app/
 
+# Train the models so they are available in the container
+RUN python scripts/train_models.py
+
 # Expose FastAPI port
 EXPOSE 8000
 
